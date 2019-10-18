@@ -4,66 +4,61 @@
 
 
 
-#### 本项目内容主要以笔记为主，后期如果涉及相关BigData代码，会在个人Github账号中给到Demo.
+##### 本项目内容主要以笔记为主，后期如果涉及相关BigData代码，会在个人Github账号中给到Demo.
 
 
 
-#### 如果你觉得写得差强人意，麻烦给一个小星星！![yes](assets/star.png)
+##### 如果你觉得写得差强人意，麻烦给一个小星星！![yes](assets/star.png)
 
 
 
+##### 简单分类：
 
-
-### 简单分类：
-
-**数据采集**：Flume、Kafka、Scribe、Chukwa
-
-**数据处理**：Hadoop、Spark、Storm、Flink、Pig、Tez、Impala、Presto、Kylin、Drill、Phoniex、Beam、Apex
-
-**数据存储**：HBase、HDFS、Cassandra、Kudu、Alluxio、Parquet
-
-**数据仓库**：Hive、HAWQ
-
-**分布式协调**：Zookeeper
-
-**序列化**：Avro、protobuf、Parquet、apacheORC、Thrift
-
-**数据转移**：Sqoop、SSIS
-
-**集群部署&管理&监控&调度&可视化分析**: Ambari、Yarn、Mesos、业务Quartz、Oozie、Azkaban、Hue
-
-**机器学习&数据挖掘**：Mahout、TF、Spark MLlib、R
-
-**搜索引擎**：Solr, ElasticSearch
-
-**可视化**：Grafana、Kibana、NodeJS+socket.io+HighCharts、Flask+flask-SocketIO
-
-**BI可视化工具**：Redash、CBoard、Apache Superset、Tableau
-
-**数据生命周期管理框架**: Apache Falcon
-
-**安全**：apache Sentry、Knox、Kerberos and Kerberos+apache ranger + apache eagle
-
-**数据流自动化**：apache NiFi
-
-**新型ETL**：NDF
-
-**阿里云对象存储系统**：
-
-**统一编程模型**：Cascading、Apache Crunch、Apache Beam
-
+> **数据采集**：Flume、Kafka、Scribe、Chukwa
+>
+> **数据处理**：Hadoop、Spark、Storm、Flink、Pig、Tez、Impala、Presto、Kylin、Drill、Phoniex、Beam、Apex
+>
+> **数据存储**：HBase、HDFS、Cassandra、Kudu、Alluxio、Parquet
+>
+> **数据仓库**：Hive、HAWQ
+>
+> **分布式协调**：Zookeeper
+>
+> **序列化**：Avro、protobuf、Parquet、apacheORC、Thrift
+>
+> **数据转移**：Sqoop、SSIS
+>
+> **集群部署&管理&监控&调度&可视化分析**: Ambari、Yarn、Mesos、业务Quartz、Oozie、Azkaban、Hue
+>
+> **机器学习&数据挖掘**：Mahout、TF、Spark MLlib、R
+>
+> **搜索引擎**：Solr, ElasticSearch
+>
+> **可视化**：Grafana、Kibana、NodeJS+socket.io+HighCharts、Flask+flask-SocketIO
+>
+> **BI可视化工具**：Redash、CBoard、Apache Superset、Tableau
+>
+> **数据生命周期管理框架**: Apache Falcon
+>
+> **安全**：apache Sentry、Knox、Kerberos and Kerberos+apache ranger + apache eagle
+>
+> **数据流自动化**：apache NiFi
+>
+> **新型ETL**：NDF
+>
+> **阿里云对象存储系统**：
+>
+> **统一编程模型**：Cascading、Apache Crunch、Apache Beam
 
 
 
+##### 初步整理：
 
-### 初步整理：
 ![image-20191018181746190](assets/image-20191018181746190.png)
 
 
 
-
-
-### 一句话介绍：
+##### 一句话介绍：
 
 | 组件           | 简介                                                         |
 | -------------- | ------------------------------------------------------------ |

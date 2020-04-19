@@ -1,4 +1,4 @@
-# Getting Started
+# Flink实战（1）
 
 #### 知识点：
 
@@ -197,6 +197,26 @@ dataStream.filter(…).map().startNewChain().reduce()：连同map一起开启新
 
 
 
+##### OperatorChain && Task
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #### 博客
 
@@ -213,5 +233,6 @@ dataStream.filter(…).map().startNewChain().reduce()：连同map一起开启新
 5. 源码：
     https://blog.csdn.net/yanghua_kobe
     
+
 [OPPO数据中台之基石](https://mp.weixin.qq.com/s?__biz=MzU5OTQ1MDEzMA==&mid=2247486279&idx=1&sn=3b73e76a5597879a04bf671e93d6959d&chksm=feb5fc3ac9c2752cd0dae6def3d412d37ff1613c69e532042fc4e22b19ca639a71c06f6c3aea&mpshare=1&scene=23&srcid=#rd)
 

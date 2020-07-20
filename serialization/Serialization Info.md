@@ -87,7 +87,7 @@
 
 ​	内存中数据表现的形式：Thrift、Protobuf、Avro均属于对象模型
 
-![image-20190327162651005](../../assets/image-20190327162651005.png)
+![image-20190327162651005](../hadoop/assets/image-20190327162651005.png)
 
 
 

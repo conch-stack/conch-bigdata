@@ -6,9 +6,7 @@
 
 - 字节数组封装实际传递的数据：通常使用Avro，Thrift，Protobuf等对象序列化
 
-
-
-![image-20190326181302756](../../assets/image-20190326181302756.png)
+![image-20190326181302756](assets/image-20190326181302756.png)
 
 #### Source:
 

@@ -55,7 +55,7 @@ ViewFs：
 
 ​	多机架，多机房
 
-![image-20190327195859581](../../assets/image-20190327195859581.png)
+![image-20190327195859581](assets/image-20190327195859581.png)
 
 默认3副本(可配置)
 
@@ -137,7 +137,7 @@ TODO
 - cell：通过rowkey、column family、column qualifier可唯一定位一个cell，**cell内部保存了多个版本的数值**，默认情况下，每个数值的版本号为写入的**时间戳**，cell内的数据也是没有数据类型的，以数组形式保存
 - timestamp：默认cell的版本号，类型为long，用户可自定义，**每个cf保留最大版本数可单独配置，默认为3**，**如果读数据时未指定版本号，HBase会返回最新版本的数值**，如果一个cell内版本号数量超过最大值，则旧的版本号会被删除
 
-![image-20190327212956144](../../assets/image-20190327212956144.png)
+![image-20190327212956144](assets/image-20190327212956144.png)
 
 
 
@@ -149,7 +149,7 @@ TODO
 
 #### 物理数据存储
 
-![image-20190327220226661](../../assets/image-20190327220226661.png)
+![image-20190327220226661](assets/image-20190327220226661.png)
 
 
 
@@ -184,7 +184,7 @@ Master不与Slave直接互连，而是通过Zookeeper进行解耦，使得Master
 
 #### Region定位
 
-![image-20190328143246310](../../assets/image-20190328143246310.png)
+![image-20190328143246310](assets/image-20190328143246310.png)
 
 hbase:meta表存放了每个表中rowkey区间与Region存放位置（RegionServer）的映射
 
@@ -231,13 +231,13 @@ value: RegionServer对象(保存RegionServer的位置信息)
 
 MemStore存储格式
 
-![image-20190328154038826](../../assets/image-20190328154038826.png)
+![image-20190328154038826](assets/image-20190328154038826.png)
 
 
 
 HFile存储格式
 
-![image-20190328161121623](../../assets/image-20190328161121623.png)
+![image-20190328161121623](assets/image-20190328161121623.png)
 
 > * 数据按照key升序排序
 > * 文件由若干个64KB的Block构成，每个Block包含一系列Key/Value
@@ -372,7 +372,7 @@ Tablet 数据子集 类似HBase的Region
 
 #### Yarn工作流程
 
-![image-20190329205051688](../../assets/image-20190329205051688.png)
+![image-20190329205051688](assets/image-20190329205051688.png)
 
 
 
@@ -387,7 +387,7 @@ Tablet 数据子集 类似HBase的Region
   - 动态更新配置文件：管理员可根据需要动态修改各种资源调度器相关配置参数而无需重启集群
   - capacity-scheduler.xml
 
-  ![image-20190329211841419](../../assets/image-20190329211841419.png)
+  ![image-20190329211841419](assets/image-20190329211841419.png)
 
 - Fair Scheduler
 
@@ -449,7 +449,7 @@ OpenMPI：高性能并行编程接口
 - 压缩算法需可分解(Splitable) -> 切合MapReduce，保证任务并行处理 -> LZO和Bzip2
 - 文件级别压缩：不能分解，只能被一个任务处理 -> Gzip和Snappy
 
-![image-20190331183257543](../../assets/image-20190331183257543.png)
+![image-20190331183257543](assets/image-20190331183257543.png)
 
 
 
@@ -804,7 +804,7 @@ RDD存在一定局限性：
 
 处理结构化数据的分析引擎。
 
-![image-20190402144606097](../../assets/image-20190402144606097.png)
+![image-20190402144606097](assets/image-20190402144606097.png)
 
 - SQL
 - DataFrame/Dataset
@@ -856,7 +856,7 @@ val sc = spark.sparkContext
 
 
 
-![image-20190402161528326](../../assets/image-20190402161528326.png)
+![image-20190402161528326](assets/image-20190402161528326.png)
 
 
 
@@ -931,7 +931,7 @@ csvDF.show()
 
 > saveAsTable() ：将DataFrame永久持久化到Hive中
 
-![image-20190402181457807](../../assets/image-20190402181457807.png)
+![image-20190402181457807](assets/image-20190402181457807.png)
 
 
 

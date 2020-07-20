@@ -123,7 +123,7 @@ TODO
 
 ### HBase
 
-​	分布式数据库：可保存海量数据，包含结构化和半结构化的数据，这类数据需要支持更新操作：入随机插入和删除。
+​	分布式数据库：可保存海量数据，包含结构化和半结构化的数据，这类数据需要支持更新操作：如随机插入和删除。
 
 #### 逻辑数据模型
 
@@ -131,7 +131,7 @@ TODO
 
 ​	**HBase表由一系列行构成，每行数据有一个rowkey，以及若干 column family构成，每个column family包含无限制列**
 
-- rowkey：标识数据，**类似主键，是定位改数据的索引**，同一张表内，rowkey是全局有序的，rowkey无数据类型，以 byte[] 形式保存
+- rowkey：标识数据，**类似主键，是定位该数据的索引**，同一张表内，rowkey是全局有序的，rowkey无数据类型，以 byte[] 形式保存
 - column family：每行数据拥有相同的cf，cf属于schema的一部分，需在声明表时定义，可包含无数动态列，是访问控制的基本单位(存储数据单位)，同一cf中的数据在物理上存在同一文件中；cf名称类型为字符串，由一系列符合linux路径规则的字符组成
 - column qualifier：cf中的列标识，可通过 family:quailfier(CF1:col1)唯一标识一列数据，qualifier不属于schema的一部分，可动态指定，每行数据可以有不同的cq，cq无数据类型，以 byte[] 形式保存
 - cell：通过rowkey、column family、column qualifier可唯一定位一个cell，**cell内部保存了多个版本的数值**，默认情况下，每个数值的版本号为写入的**时间戳**，cell内的数据也是没有数据类型的，以数组形式保存
@@ -331,7 +331,7 @@ Tablet 数据子集 类似HBase的Region
 
 ### YARN
 
-- ResourceManager (HA -> Active RM & Standbhy RM -> 依靠Zk进行选举)
+- ResourceManager (HA -> Active RM & Standby RM -> 依靠Zk进行选举)
   - 调度器 Scheduler
     - 只负责系统资源的分配 -> 资源容器 Container (动态分配的单位：内存、cpu、磁盘、网络等)
     - 可插拔，可自设计新的调度器，可直接用的有：**Fair Scheduler(Facebook)、Capacity Scheduler(雅虎)**
@@ -357,7 +357,7 @@ Tablet 数据子集 类似HBase的Region
 #### ResourceManager HA
 
 - ResourceManager Recovery过程
-  - 保存元信息： Active RM 运行时，将状态信息以及安全凭证等数据持久化导存储系统(state-store)
+  - 保存元信息： Active RM 运行时，将状态信息以及安全凭证等数据持久化到存储系统(state-store)
     - Zookeeper 必选
     - FileSystem
     - LevelDB
@@ -481,7 +481,7 @@ Map()后的结果会存在本地磁盘，由Reduce()通过Http协议拉取(pull)
 
 Map阶段，会从HDFS上读取数据，如果不同机架、不同节点存在网络消耗，所以框架会优化逻辑
 
-需要部署提供机架等信息
+需要部署提供机架等信息1
 
 - Node-Local  本地
 - Rack-Local 同机架
@@ -607,7 +607,7 @@ MapReduce采用推测执行机制，根据一定法则推测出 "拖后腿" 的�
 > * take(n) 返回RDD前n个元素
 > * **saveAsTextFile(path) 将RDD存储到文本文件，并调用每个元素的toString方法将元素转换为字符串保存成一行**
 > * **saveAsSequenceFile(path) 针对key-value类型的RDD，将其保存到sequence个数文件**
-> * countByKey() 郑针对key-value类型的RDD，统计每个key出现的次数，以hashmap返回
+> * countByKey() 针对key-value类型的RDD，统计每个key出现的次数，以hashmap返回
 > * foreach(func) 将RDD中元素依次调用func处理
 
 

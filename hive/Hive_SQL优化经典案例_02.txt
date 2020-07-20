@@ -1,0 +1,97 @@
+-------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------
+-- Hive SQL 优化案例二：复杂SQL分解法
+-- 问题描述：一个复杂的SQL，查询执行一段时间后报错：基本上是查不出来; 
+--         分析函数对于大表来说不是 hive的强项，这个时候我们将其分解成很多子集，并且合理利用 hive 分区表的优势，然后去 join 
+-------------------------------------------------------------------------------------------------------------------------------
+
+-- 1.1 将要执行的查询
+
+create table bi_tmp.aloha_UserLoyalty_190301_190303 as 
+    select aid, imei, idfa, udid, event, duration, dt, time_local, hour, source, 
+        first_value(time_local) over(partition by udid, event order by time_local) as first_time,
+        last_value(time_local) over(partition by udid, event order by time_local) as last_time,
+        count(time_local) over(partition by udid, event, dt) as event_count_per_day,
+        sum(duration) over(partition by udid, event, dt) as event_duration_each_day
+    from dwb_v8sp.event_column_info_new_hour
+    where event in ('app_start', 'app_exit', 'effective_play', 'share_succ', 'like', 'unlike', 'like_comment', 'unlike_comment', 
+        'comment_success')
+        and dt >= '2019-03-01' and dt <= '2019-03-03';
+
+select count(*) 
+from dwb_v8sp.event_column_info_new_hour
+where event in ('app_start', 'app_exit', 'effective_play', 'share_succ', 'like', 'unlike', 'like_comment', 'unlike_comment', 'comment_success')
+and dt >= '2019-03-01' and dt <= '2019-03-03';
+
+-------------------------------------------------------------------------------------------------------------------------------
+-- 总记录行数 2.7 亿
+0: jdbc:hive2://ks-hdp-master-01.dns.rightpad (bi_tmp)> select count(*)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . > from dwb_v8sp.event_column_info_new_hour
+. . . . . . . . . . . . . . . . . . . . . . . . . . . > where event in ('app_start', 'app_exit', 'effective_play', 'share_succ', 'like', 'unlike', 'like_comment', 'unlike_comment', 'comment_success')
+. . . . . . . . . . . . . . . . . . . . . . . . . . . > and dt >= '2019-03-01' and dt <= '2019-03-03';
++------------+
+|    _c0     |
++------------+
+| 269361541  |
++------------+
+1 row selected (102.624 seconds)
+
+select count(distinct event) as dis_event
+from dwb_v8sp.event_column_info_new_hour
+where event in ('app_start', 'app_exit', 'effective_play', 'share_succ', 'like', 'unlike', 'like_comment', 'unlike_comment', 'comment_success')
+and dt >= '2019-03-01' and dt <= '2019-03-03';
+
+--- 分解成三个子集，并保存到三张表：  bi_tmp.zyt1, bi_tmp.zyt2, bi_tmp.zyt3
+
+-- drop table if exists bi_tmp.zyt1;
+create table bi_tmp.zyt1 partitioned by(event)
+as
+select udid, 
+       min(time_local) as first_time,
+       max(time_local) as last_time,
+       event
+from dwb_v8sp.event_column_info_new_hour
+where event in ('app_start', 'app_exit', 'effective_play', 'share_succ', 'like', 'unlike', 'like_comment', 'unlike_comment', 'comment_success')
+and dt >= '2019-03-01' and dt <= '2019-03-03'
+group by udid, event;
+
+-- drop table if exists bi_tmp.zyt2 purge;
+create table bi_tmp.zyt2 partitioned by(dt,event)
+as
+select udid, 
+       count(time_local) as event_count_per_day,
+       sum(duration) as event_duration_each_day,
+       dt,
+       event
+from dwb_v8sp.event_column_info_new_hour
+where event in ('app_start', 'app_exit', 'effective_play', 'share_succ', 'like', 'unlike', 'like_comment', 'unlike_comment', 'comment_success')
+and dt >= '2019-03-01' and dt <= '2019-03-03'
+group by udid, dt, event;
+
+create table bi_tmp.zyt3 partitioned by(dt,event)
+as select aid, imei, idfa, udid, duration, time_local, hour, source, dt, event
+from dwb_v8sp.event_column_info_new_hour t3
+    where event in ('app_start', 'app_exit', 'effective_play', 'share_succ', 'like', 'unlike', 'like_comment', 'unlike_comment', 
+        'comment_success')
+        and dt >= '2019-03-01' and dt <= '2019-03-03';
+
+-- 插入目标表：
+create table bi_tmp.aloha_UserLoyalty_190301_190303 as 
+    select t3.aid, t3.imei, t3.idfa, t3.udid, t3.event, t3.duration, t3.dt, t3.time_local, t3.hour, t3.source, 
+        t1.first_time,
+        t1.last_time,
+        t2.event_count_per_day,
+        t2.event_duration_each_day
+    from bi_tmp.zyt1 t1 join bi_tmp.zyt2 t2 on t1.event=t2.event and t1.udid=t2.udid
+    join bi_tmp.zyt3 t3 on t2.dt=t3.dt and t2.event= t3.event and t2.udid=t3.udid;
+
+-- 验证数据：（与上面的查询记录行数对的上)
+
+0: jdbc:hive2://ks-hdp-master-01.dns.rightpad (bi_tmp)> select count(*) from bi_tmp.aloha_UserLoyalty_190301_190303;
++------------+
+|    _c0     |
++------------+
+| 269361541  |
++------------+
+1 row selected (0.22 seconds)
+

@@ -1,0 +1,152 @@
+-------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------
+-- Hive SQL 优化案例一：
+-------------------------------------------------------------------------------------------------------------------------------
+-- 1.1 将要执行的查询(执行了 1个多小时才出结果)：
+SELECT dt as DATA_DATE,STRATEGY,AB_GROUP,SOURCE,
+    count(distinct case when lower(event) not like '%push%' and event!='corner_mark_show' then udid else null end) as DAU,
+    count(case when event='client_show' then 1 else null end) as TOTAL_VSHOW,
+    count(distinct case when event='client_show' then vid else null end) as TOTAL_VIDEO_VSHOW,
+    count(case when event='video_play' then 1 else null end) as TOTAL_VV_VP,
+    count(distinct case when event='video_play' then udid else null end) as TOTAL_USERS_VP,
+    count(case when event='effective_play' then 1 else null end) as TOTAL_VV_EP,
+    count(distinct case when event='effective_play' then udid else null end) as TOTAL_USERS_EP,
+    sum(case when event='video_over' then duration else 0 end) as TOTAL_DURATION,
+    count(case when event='video_over' then 1 else null end) as TOTAL_VOVER,
+    sum(case when event='video_over' then play_cnts else 0 end) as TOTAL_VOVER_PCNTS,
+    count(case when event='push_video_clk' then 1 else null end) as TOTAL_PUSH_VC,
+    count(distinct case when event='app_start' and body_source = 'push' then udid else null end) as TOTAL_PUSH_START,
+    count(case when event='post_comment' then 1 else null end) as TOTAL_REPLY,
+    count(distinct case when event='post_comment' then udid else null end) as TOTAL_USERS_REPLY
+    FROM dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl
+group by dt,strategy,ab_group,source;
+
+-------------------------------------------------------------------------------------------------------------------------------
+-- 1.2 查询语句涉及到的表有 7.7亿+ 数据。（查询如下)
+0: jdbc:hive2://ks-hdp-master-01.dns.rightpad (default)> select count(*) from dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl;
++------------+
+|    _c0     |
++------------+
+| 773366039  |
++------------+
+
+-------------------------------------------------------------------------------------------------------------------------------
+-- 1.3
+-- 优化思路：既然将要执行的查询是按照 dt, strategy, ab_group, source 这4个字段分组， 那么在建表的时候，就按这四个字段中的N个（1 或 2 或 3 或 4）个字段组合分区，
+--          直接让 count(distinct xx) 之类的查询定位到“更少的数据子集”，其执行效率就应该更高了（不需要每个子任务均从 7.7亿+ 的数据中(去重)统计)。
+
+-------------------------------------------------------------------------------------------------------------------------------
+-- 1.4 先看每个字段将会有多少分区（因为 Hive 表分区也不宜过多，一般一个查询语句涉及到的 hive分区 应该控制在2K内)
+
+0: jdbc:hive2://ks-hdp-master-01.dns.rightpad (default)> select count(distinct dt) as dis_dt, count(distinct strategy) as dis_strategy, 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .>        count(distinct ab_group) as dis_ab_group, count(distinct source) as dis_source
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .> from dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl;
++---------+---------------+---------------+-------------+
+| dis_dt  | dis_strategy  | dis_ab_group  | dis_source  |
++---------+---------------+---------------+-------------+
+| 1       | 14            | 72            | 2           |
++---------+---------------+---------------+-------------+
+
+[hue@ks-hdp-client-v02 10:55:08 /usr/local/hue]$ python
+Python 2.7.12 (default, Dec  4 2017, 14:50:18)
+[GCC 5.4.0 20160609] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> 2*14*72
+2016
+
+-- 2016 个分区还可以接受。
+
+-------------------------------------------------------------------------------------------------------------------------------
+-- 1.5 根据原表，新建分区表，并将原表数据插入新表：
+
+show create table dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl;
+
+0: jdbc:hive2://ks-hdp-master-01.dns.rightpad (default)> show create table dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl;
++----------------------------------------------------+
+|                   createtab_stmt                   |
++----------------------------------------------------+
+| CREATE TABLE `dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl`( |
+|   `dt` string,                                     |
+|   `strategy` string,                               |
+|   `ab_group` string,                               |
+|   `source` string,                                 |
+|   `event` string,                                  |
+|   `udid` string,                                   |
+|   `vid` string,                                    |
+|   `duration` string,                               |
+|   `body_source` string,                            |
+|   `play_cnts` string)                              |
+| ROW FORMAT SERDE                                   |
+|   'org.apache.hadoop.hive.ql.io.orc.OrcSerde'      |
+| STORED AS INPUTFORMAT                              |
+|   'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'  |
+| OUTPUTFORMAT                                       |
+|   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat' |
+| LOCATION                                           |
+|   'hdfs://uhcluster/warehouse/tablespace/managed/hive/dwb_v8sp_tmp.db/base_report_bystrategy_byab_source_column_zkl' |
+| TBLPROPERTIES (                                    |
+|   'bucketing_version'='2',                         |
+|   'transactional'='true',                          |
+|   'transactional_properties'='default',            |
+|   'transient_lastDdlTime'='1550649105')            |
++----------------------------------------------------+
+24 rows selected (0.103 seconds)
+
+-- 创建新表：按 dt,source,stragegy,ab_group 分区(注意先后顺序，一般习惯分区数越少的越靠前，根据1.5的查询可知：dt=1,source=2,strategy=14,ab_group=72)
+create external table `dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_lym`(
+  event string,
+  udid string,
+  vid string,
+  duration string,
+  body_source string,
+  play_cnts string
+)
+PARTITIONED BY (
+  dt string,
+  source string,
+  strategy string,
+  ab_group string
+);
+
+-- 将原表数据插入新表：
+insert into `dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_lym` partition(dt,source,strategy,ab_group)
+select event,udid,vid,duration,body_source,play_cnts,dt,source,strategy,ab_group
+from `dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl`;
+
+-- 核对两表的数据是否一致：
+0: jdbc:hive2://ks-hdp-master-01.dns.rightpad (default)> select count(*) from dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_lym;
++------------+
+|    _c0     |
++------------+
+| 773366039  |
++------------+
+1 row selected (35.903 seconds)
+0: jdbc:hive2://ks-hdp-master-01.dns.rightpad (default)> select count(*) from dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_zkl;
++------------+
+|    _c0     |
++------------+
+| 773366039  |
++------------+
+
+-------------------------------------------------------------------------------------------------------------------------------
+-- 1.6 基于新表执行查询(执行5分钟出结果)：
+
+SELECT dt as DATA_DATE,source,strategy,ab_group,
+    count(distinct case when lower(event) not like '%push%' and event!='corner_mark_show' then udid else null end) as DAU,
+    count(case when event='client_show' then 1 else null end) as TOTAL_VSHOW,
+    count(distinct case when event='client_show' then vid else null end) as TOTAL_VIDEO_VSHOW,
+    count(case when event='video_play' then 1 else null end) as TOTAL_VV_VP,
+    count(distinct case when event='video_play' then udid else null end) as TOTAL_USERS_VP,
+    count(case when event='effective_play' then 1 else null end) as TOTAL_VV_EP,
+    count(distinct case when event='effective_play' then udid else null end) as TOTAL_USERS_EP,
+    sum(case when event='video_over' then duration else 0 end) as TOTAL_DURATION,
+    count(case when event='video_over' then 1 else null end) as TOTAL_VOVER,
+    sum(case when event='video_over' then play_cnts else 0 end) as TOTAL_VOVER_PCNTS,
+    count(case when event='push_video_clk' then 1 else null end) as TOTAL_PUSH_VC,
+    count(distinct case when event='app_start' and body_source = 'push' then udid else null end) as TOTAL_PUSH_START,
+    count(case when event='post_comment' then 1 else null end) as TOTAL_REPLY,
+    count(distinct case when event='post_comment' then udid else null end) as TOTAL_USERS_REPLY
+    FROM dwb_v8sp_tmp.base_report_bystrategy_byab_source_column_lym
+group by dt,source,strategy,ab_group;
+
+-- 注意：查询结果中，有些字段有 "__HIVE_DEFAULT_PARTITION__" 应该是该字段的“空值”（待验证)。

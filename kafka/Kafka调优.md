@@ -175,3 +175,15 @@ Empty状态（消费者组状态机）下的组Kafka才会执行过期位移删�
   - Preferred领导者选举 - 为了避免部分Broker负载过重而提供的一种换Leader的方案
   - 集群成员管理（新增Broker、Broker主动关闭、Broker宕机） - 监听Watch检测zookeeper的/brokers/ids节点下的子节点数量变更
   - 数据服务 - 向其他Broker提供数据服务（。控制器上保存了最全的集群元数据信息）
+
+
+
+
+
+##### Kafka动态配置
+
+- 动态调整Broker端各种线程池大小，实时应对突发流量。
+- 动态调整Broker端连接信息或安全配置信息。
+- 动态更新SSL Keystore有效期。
+- 动态调整Broker端Compact操作性能。
+- 实时变更JMX指标收集器(JMX Metrics Reporter)。

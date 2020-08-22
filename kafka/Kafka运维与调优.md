@@ -220,6 +220,14 @@ kafka-broker-api-versions脚本。**这个脚本的主要目的是验证不同Ka
 
 
 
+##### 查看Kafka日志文件数据长什么样
+
+```shell
+bin/kafka-dump-log.sh --files ../data_dir/kafka_1/test-topic-1/00000000000000000000.log --deep-iteration --print-data-log
+```
+
+
+
 ##### 生产者性能测试（kafka-producer-perf-test.sh）
 
 ```shell
@@ -251,4 +259,29 @@ start.time, end.time, data.consumed.in.MB, MB.sec, data.consumed.in.nMsg, nMsg.s
 
 
 ##### Kafka集群间的数据同步（kafka-mirror-maker.sh）
+
+MirrorMaker就是一个消费者+生产者的程序。消费者负责从源集群（Source Cluster）消费数据，生产者负责向目标集群（Target Cluster）发送消息
+
+```shell
+# 它的常见用法是指定生产者配置文件、消费者配置文件、线程数(消费者个数)以及要执行数据镜像的主题正则表达式
+$ bin/kafka-mirror-maker.sh --consumer.config ./config/consumer.properties --producer.config ./config/producer.properties --num.streams 8 --whitelist ".*"
+```
+
+**注意点：MirrorMaker在执行消息镜像的过程中，如果发现要同步的主题在目标集群上不存在的话，它就会根据Broker端参数num.partitions和default.replication.factor的默认值，自动将主题创建出来，在实际使用场景中，我推荐你提前把要同步的所有主题按照源集群上的规格在目标集群上等价地创建出来。**
+
+除了常规的Kafka主题之外，MirrorMaker默认还会同步内部主题。
+
+其他开源方案：
+
+- [Uber的uReplicator工具](https://github.com/uber/uReplicator)
+- LinkedIn开发的Brooklin Mirror Maker工具
+- Confluent公司研发的Replicator工具（收费）
+
+MirrorMaker本身功能简单，应用灵活，但也有运维成本高、性能差等劣势，因此业界有厂商研发了自己的镜像工具。你可以根据自身的业务需求，选择合适的工具来帮助你完成跨集群的数据备份。
+
+
+
+##### Kafka监控
+
+
 

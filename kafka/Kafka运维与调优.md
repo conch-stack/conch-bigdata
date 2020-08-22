@@ -283,5 +283,36 @@ MirrorMaker本身功能简单，应用灵活，但也有运维成本高、性能
 
 ##### Kafka监控
 
-
+- 主机监控（机器性能）
+  - 机器负载（Load）
+  - CPU使用率
+  - 内存使用率，包括空闲内存（Free Memory）和已使用内存（Used Memory）
+  - 磁盘I/O使用率，包括读使用率和写使用率
+  - 网络I/O使用率
+  - TCP连接数
+  - 打开文件数
+  - inode使用情况
+- JVM监控
+  - Full GC发生频率和时长。这个指标帮助你评估Full GC对Broker进程的影响。长时间的停顿会令Broker端抛出各种超时异常。
+  - 活跃对象大小。这个指标是你设定堆大小的重要依据，同时它还能帮助你细粒度地调优JVM各个代的堆大小。
+  - 应用线程总数。这个指标帮助你了解Broker进程对CPU的使用情况。
+  - 具体：**你一定要监控你的Broker GC日志，即以kafkaServer-gc.log开头的文件**，注意不要出现Full GC的字样。一旦你发现Broker进程频繁Full GC，可以开启G1的-XX:+PrintAdaptiveSizePolicy开关，让JVM告诉你到底是谁引发了Full GC。
+- 集群监控
+  - 查看Broker进程是否启动，端口是否建立
+    - 在很多容器化的Kafka环境中，比如使用Docker启动Kafka Broker时，容器虽然成功启动了，但是里面的网络设置如果配置有误，就可能会出现进程已经启动但端口未成功建立监听的情形
+  - 查看Broker端关键日志
+    - 服务器日志server.log（最重要的：严重错误都会在这个文件中被展示出来）
+    - 控制器日志controller.log
+    - 主题分区状态变更日志state-change.log
+  - 查看Broker端关键线程的运行状态
+    - Log Compaction线程，这类线程是以kafka-log-cleaner-thread开头的
+    - 副本拉取消息的线程，通常以ReplicaFetcherThread开头
+  - 查看Broker端的关键JMX指标（Kafka提供了超多的JMX指标供用户实时监测）
+    - **BytesIn/BytesOut**：即Broker端每秒入站和出站字节数。你要确保这组值不要接近你的网络带宽，**否则这通常都表示网卡已被“打满”，很容易出现网络丢包的情形。**
+    - **NetworkProcessorAvgIdlePercent**：即网络线程池线程平均的空闲比例。通常来说，你应该确保这个JMX值长期大于30%。如果小于这个值，就表明你的网络线程池非常繁忙，你需要通过增加网络线程数或将负载转移给其他服务器的方式，来给该Broker减负。
+    - **RequestHandlerAvgIdlePercent**：即I/O线程池线程平均的空闲比例。同样地，如果该值长期小于30%，你需要调整I/O线程池的数量，或者减少Broker端的负载。
+    - **UnderReplicatedPartitions**：即未充分备份的分区数。所谓未充分备份，是指并非所有的Follower副本都和Leader副本保持同步。一旦出现了这种情况，通常都表明该分区有可能会出现数据丢失。因此，这是一个非常重要的JMX指标。
+    - **ActiveControllerCount**：即当前处于激活状态的控制器的数量。正常情况下，Controller所在Broker上的这个JMX指标值应该是1，其他Broker上的这个值是0。如果你发现存在多台Broker上该值都是1的情况，一定要赶快处理，处理方式主要是查看网络连通性。这种情况通常表明集群出现了脑裂。脑裂问题是非常严重的分布式故障，Kafka目前依托ZooKeeper来防止脑裂。但一旦出现脑裂，Kafka是无法保证正常工作的。
+    - 还可以根据自己业务的需要，去官网查看其他JMX指标，把它们集成进你的监控框架
+  - 监控Kafka客户端
 

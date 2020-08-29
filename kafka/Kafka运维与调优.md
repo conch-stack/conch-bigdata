@@ -284,6 +284,7 @@ MirrorMaker本身功能简单，应用灵活，但也有运维成本高、性能
 ##### Kafka监控
 
 - 主机监控（机器性能）
+
   - 机器负载（Load）
   - CPU使用率
   - 内存使用率，包括空闲内存（Free Memory）和已使用内存（Used Memory）
@@ -292,12 +293,16 @@ MirrorMaker本身功能简单，应用灵活，但也有运维成本高、性能
   - TCP连接数
   - 打开文件数
   - inode使用情况
+
 - JVM监控
+
   - Full GC发生频率和时长。这个指标帮助你评估Full GC对Broker进程的影响。长时间的停顿会令Broker端抛出各种超时异常。
   - 活跃对象大小。这个指标是你设定堆大小的重要依据，同时它还能帮助你细粒度地调优JVM各个代的堆大小。
   - 应用线程总数。这个指标帮助你了解Broker进程对CPU的使用情况。
   - 具体：**你一定要监控你的Broker GC日志，即以kafkaServer-gc.log开头的文件**，注意不要出现Full GC的字样。一旦你发现Broker进程频繁Full GC，可以开启G1的-XX:+PrintAdaptiveSizePolicy开关，让JVM告诉你到底是谁引发了Full GC。
+
 - 集群监控
+
   - 查看Broker进程是否启动，端口是否建立
     - 在很多容器化的Kafka环境中，比如使用Docker启动Kafka Broker时，容器虽然成功启动了，但是里面的网络设置如果配置有误，就可能会出现进程已经启动但端口未成功建立监听的情形
   - 查看Broker端关键日志
@@ -316,3 +321,46 @@ MirrorMaker本身功能简单，应用灵活，但也有运维成本高、性能
     - 还可以根据自己业务的需要，去官网查看其他JMX指标，把它们集成进你的监控框架
   - 监控Kafka客户端
 
+- 监控框架：
+
+  - JMXTool
+
+    - ```shell
+      # 查看使用方法
+      $ bin/kafka-run-class.sh kafka.tools.JmxTool
+      ```
+
+    - --attributes：指定要查询的JMX属性名称，以逗号分割的csv格式
+
+    - --date-format：指定显示的日期格式
+
+    - --jmx-url：指定要连接的jmx接口，默认格式为：service:jmx:rmi:///jndi/rmi:<JMX端口>/jmxrmi
+
+    - --object-name：指定要查询的JMX MBean的名称
+
+    - --reporting-interval：指定实时查询的时间间隔，默认2秒查询一次
+
+    - ```shell
+      # Demo：每5秒查询一次过去1分钟的BytesInPerSec均值（Broker端每秒入站的流量）
+      $ bin/kafka-run-class.sh kafka.tools.JmxTool --object-name kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec --jmx-url service:jmx:rmi:///jndi/rmi://:9997/jmxrmi --date-format "YYYY-MM-dd HH:mm:ss" --attributes OneMinuteRate --reporting-interval 1000
+      ```
+
+  - Kafka Manager
+
+  - Burrow
+
+  - JMXTrans + InfluxDB + Grafana（流行）
+
+  - Kafka Eagle
+
+
+
+#####  Kafka调优
+
+高吞吐量、低延时是我们调优Kafka集群的主要目标
+
+- vm.max_map_count=655360：避免**OutOfMemoryError：Map failed**
+- 操作系统页缓存大小：给Kafka预留的页缓存越大越好，最小值至少要容纳一个日志段的大小，也就是Broker端参数log.segment.bytes的值，该参数的默认值是1GB
+- 设置堆大小：你可以查看GC log，特别是关注Full GC之后堆上存活对象的总大小，然后把堆大小设置为该值的1.5～2倍，如果你发现Full GC没有被执行过，手动运行jmap -histo:live < pid >就能人为触发Full GC。
+- 调节吞吐量
+- 调节延时

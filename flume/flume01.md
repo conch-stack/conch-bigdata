@@ -27,8 +27,12 @@
 
 #### Channel：
 
+Event缓冲区，线程安全且具有**事务性**，支持Source写失败重写，支持Sink读失败重读。
+
+通过**设置检测点和备份检测点**，实现Agent重启后快速将File Channel中的数据按顺序回放到内存，保证Agent服务
+
 - Memery Channel
-- File Channel
+- File Channel：**无丢失风险，可配置多磁盘文件路径，通过磁盘并行写入提供File Channel性能**
 - JDBC Channel  将Event写入数据库，适合故障恢复要求高的场景
 - Kafka Channel 
 

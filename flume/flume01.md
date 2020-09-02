@@ -32,7 +32,7 @@ Event缓冲区，线程安全且具有**事务性**，支持Source写失败重�
 通过**设置检测点和备份检测点**，实现Agent重启后快速将File Channel中的数据按顺序回放到内存，保证Agent服务
 
 - Memery Channel
-- File Channel：**无丢失风险，可配置多磁盘文件路径，通过磁盘并行写入提供File Channel性能**
+- File Channel：**无丢失风险，可配置多磁盘文件路径，通过磁盘并行写入提供File Channel性能（多个磁盘路径用逗号隔开）**
 - JDBC Channel  将Event写入数据库，适合故障恢复要求高的场景
 - Kafka Channel 
 
@@ -65,7 +65,7 @@ Event缓冲区，线程安全且具有**事务性**，支持Source写失败重�
 允许Flume Source 选择多个目标Channel
 
 - Replicating Channel Selector：默认，将Event导入多个Channel
-- Multiplexing Channel Selector：根据Event头部某个属性值，将Event写入对应Channel
+- Multiplexing Channel Selector：需要与拦截器配合使用，根据Event头部某个属性值，将Event写入对应Channel
 
 
 
@@ -165,6 +165,8 @@ a1.sources.r1.bind=localhost
 a1.sources.r1.port=44444
 
 a1.sinks.k1.type=hdfs
+# 按日期
+# a1.sinks.k1.hdfs.path=/data/ad/%y%m%d/%H
 a1.sinks.k1.hdfs.path=hdfs:/flume/events
 a1.sinks.k1.hdfs.filePrefix=events-
 
@@ -333,6 +335,9 @@ a1.sources.r1.port=44444
 a1.sinks.k1.type=avro
 a1.sinks.k1.hostname=localhost
 a1.sinks.k1.port=1000
+# 是否开启压缩 deflate 表示开启，如果sink开启压缩，那么Avro Source也需要设置相同的压缩格式
+# a1.sinks.k1.compression-type=deflate
+# a1.sinks.k1.compression-level=6
 
 a1.channels.c1.type=memory
 a1.channels.c1.capacity=1000

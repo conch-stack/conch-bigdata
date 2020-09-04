@@ -57,3 +57,16 @@
 - Kafka Channel简化架构
   - Source1(日志收集层) -> Kafka Channel -> sink2(日志聚合层)
   - 问题：Kafka的重复消费语义问题
+
+
+
+- 端点续传
+  - Taildir Source：参考flume01.md文档
+
+
+
+- log4j滚动生产文件问题
+  - 滚动生成文件时，会将文件重命名为加上日期的日志文件，并将原文件置空，会导致flume重复消费问题
+  - 解决
+    - 修改Taildir Source源码，打包编译，上传到flume安装目录的plugin.d目录下，以插件的方式加入flume
+    - 使用：Custom Source 自定义Source的方式配置flume

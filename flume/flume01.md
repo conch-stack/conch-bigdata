@@ -417,16 +417,21 @@ a1.channels = c1
 a1.sources.r1.type = TAILDIR
 a1.sources.r1.channels = c1
 
+# 监听读取到的文件位置存储在这里，用于端点续传
 a1.sources.r1.positionFile = /var/log/flume/taildir_position.json
 
+# 监听的文件组列表，Taildir Source通过文件组监听多个目录或文件
 a1.sources.r1.filegroups = f1 f2
+# 文件正则表达式路径或指定文件路径
 a1.sources.r1.filegroups.f1 = /var/log/test1/example.log
+# 加header信息
 a1.sources.r1.headers.f1.headerKey1 = value1
 
 a1.sources.r1.filegroups.f2 = /var/log/test2/.*log.*
 a1.sources.r1.headers.f2.headerKey1 = value2
 a1.sources.r1.headers.f2.headerKey2 = value2-2
 
+# 将文件绝对路径放入header中
 a1.sources.r1.fileHeader = true
 a1.sources.ri.maxBatchCount = 1000
 ```
@@ -473,6 +478,7 @@ a1.channels.channel1.kafka.consumer.group.id = flume-consumer
 ```properties
 a1.channels = c1
 a1.channels.c1.type = file
+# 故障恢复用
 a1.channels.c1.checkpointDir = /mnt/flume/checkpoint
 a1.channels.c1.dataDirs = /mnt/flume/data
 ```

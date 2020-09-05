@@ -1,5 +1,11 @@
 ## HBase-Rowkey设计
 
+
+
+**HBase中拼接的Rowkey的每一段需要定长，为后续scan提供便利**
+
+
+
 ##### rowkey = [userid]:[yyyymmdd]
 
 - userid放前面，可以避免数据因为time的连续性导致一段时间内，数据进入同一Region分区，导致热点数据问题

@@ -365,7 +365,7 @@ Tablet 数据子集 类似HBase的Region
     - 一旦新的RM启动，将从存储系统中加载应用程序相关数据，不影响正在运行的Container
   - 重构状态信息
     - 新RM启动后，NM会向他重新注册，汇报Container状态，AM向新RM重新发送资源请求，新RM重新分配资源
-- NameManager Recovery过程
+- NodeManager Recovery过程
   - NM重启时，之前运行的Container不会被杀死，由新NM接管
 
 
